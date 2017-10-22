@@ -18,7 +18,22 @@ def traverse_nodes(node, board, state, identity):
     Returns:        A node from which the next stage of the search can proceed.
 
     """
-    pass
+
+    leaf_node, want_node_val = None, 0
+
+    explore = lambda w, n, t, c: (w / n) + (c * sqrt((log(t) / n)))
+    best = {}
+    if not board.is_ended(state):
+
+        for child in node.child_nodes:
+            best[child.value()] = explore(child.wins, child.visits, node.visits, explore_faction)
+
+        for value in best:
+            if best[value] > want_node_val:
+                leaf_node = value
+                want_node_val = best[value]
+
+    return leaf_node
     # Hint: return leaf_node
 
 
@@ -33,11 +48,13 @@ def expand_leaf(node, board, state):
     Returns:    The added child node.
 
     """
-    moves = board.legal_actions(state)
-    action = board.current_player(state)
-    new_node = MCTSNode(node, action, moves)
-    node.child_nodes[action] = new_node
 
+    #if not board.is_ended(state):
+    actions = board.legal_actions(state)
+    action = choice(actions)
+
+    new_node = MCTSNode(node, action, actions)
+    node.child_nodes[action] = new_node
     return new_node
 
 
@@ -49,22 +66,16 @@ def rollout(board, state):
         state:  The state of the game.
 
     """
-    og_state = state
-    won = False
 
+    won = False
     while not board.is_ended():
         action = choice(board.legal_actions(state))
         state = board.next_state(state, action)
 
+    if board.current_player(state):
+        won = True
 
-    board.current_player(state)
-    if board.points_values(state)[1] == 1:
-        print("Something similar")
-    elif board.points_values(state)[2] == 1:
-        print("Something")
-
-    backpropagate(og_state, won)
-    pass
+    #backpropagate(new_node, won)
 
 
 def backpropagate(node, won):
@@ -95,6 +106,7 @@ def think(board, state):
     """
     identity_of_bot = board.current_player(state)
     root_node = MCTSNode(parent=None, parent_action=None, action_list=board.legal_actions(state))
+    sampled_game = None
 
     for step in range(num_nodes):
         # Copy the game for sampling a playthrough
@@ -104,7 +116,16 @@ def think(board, state):
         node = root_node
 
         # Do MCTS - This is all you!
+        leaf = traverse_nodes(node, board, sampled_game, identity_of_bot)
+
+        new_node = expand_leaf(leaf, board, sampled_game)
+
+        rollout(board, new_node.parent_action)
+
+        # get leaf from child nodes by using action taken
+        leaf.child_nodes
+
 
     # Return an action, typically the most frequently used action (from the root) or the action with the best
     # estimated win rate.
-    return None
+    return leaf

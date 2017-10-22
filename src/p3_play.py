@@ -46,6 +46,7 @@ state = state0
 last_action = None
 current_player = player1
 while not board.is_ended(state):
+    input("Press enter to continue...")
     print(board.display(state, last_action))
     print("Player "+str(board.current_player(state)))
     last_action = current_player(board, state)
