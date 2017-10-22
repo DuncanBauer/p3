@@ -19,12 +19,34 @@ def traverse_nodes(node, board, state, identity):
 
     """
 
-    leaf_node, want_node_val = None, 0
-
-    explore = lambda w, n, t, c: (w / n) + (c * sqrt((log(t) / n)))
+    want_node_val = 0
     best = {}
-    if not board.is_ended(state):
 
+    leaf_node = node
+    explore = lambda w, n, t, c: (w / n) + (c * sqrt((log(t) / n)))
+    values = []
+    bestest = 0
+
+    count = 0
+    while node.visits and node.child_nodes:
+        for child in node.child_nodes:
+            values[count] = explore(child.wins, child.visits, node.visits, explore_faction)
+            best[values[count]] = child
+            count += 1
+        count = 0
+
+        for value in values:
+            if bestest < value:
+                bestest = value
+                leaf_node = best[values[count]]
+            count += 1
+        count = 0
+        node = leaf_node
+    return leaf_node
+
+    """
+    while node.child_nodes:
+    while not board.is_ended(state):
         for child in node.child_nodes:
             best[child.value()] = explore(child.wins, child.visits, node.visits, explore_faction)
 
@@ -35,7 +57,7 @@ def traverse_nodes(node, board, state, identity):
 
     return leaf_node
     # Hint: return leaf_node
-
+    """
 
 def expand_leaf(node, board, state):
     """ Adds a new leaf to the tree by creating a new child node for the given node.
@@ -48,8 +70,10 @@ def expand_leaf(node, board, state):
     Returns:    The added child node.
 
     """
-
-    #if not board.is_ended(state):
+    node.__repr__()
+    print()
+    print(node)
+    print()
     actions = board.legal_actions(state)
     action = choice(actions)
 
@@ -66,16 +90,9 @@ def rollout(board, state):
         state:  The state of the game.
 
     """
-
-    won = False
     while not board.is_ended():
         action = choice(board.legal_actions(state))
         state = board.next_state(state, action)
-
-    if board.current_player(state):
-        won = True
-
-    #backpropagate(new_node, won)
 
 
 def backpropagate(node, won):
@@ -120,10 +137,13 @@ def think(board, state):
 
         new_node = expand_leaf(leaf, board, sampled_game)
 
-        rollout(board, new_node.parent_action)
+        rollout(board, sampled_game)
 
-        # get leaf from child nodes by using action taken
-        leaf.child_nodes
+        player = board.current_player(sampled_game)
+        if player == identity_of_bot:
+            backpropagate(new_node, True)
+        else:
+            backpropagate(new_node, False)
 
 
     # Return an action, typically the most frequently used action (from the root) or the action with the best
