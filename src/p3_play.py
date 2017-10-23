@@ -46,11 +46,12 @@ state = state0
 last_action = None
 current_player = player1
 while not board.is_ended(state):
-    input("Press enter to continue...")
-    print(board.display(state, last_action))
+    #input("Press enter to continue...")
     print("Player "+str(board.current_player(state)))
     last_action = current_player(board, state)
     state = board.next_state(state, last_action)
     current_player = player1 if current_player == player2 else player2
+    print(board.display(state, last_action))
+print(board.owned_boxes(state))
 print("Finished!")
 print(board.points_values(state))
