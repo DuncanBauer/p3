@@ -3,7 +3,7 @@ from mcts_node import MCTSNode
 from random import choice
 from math import sqrt, log
 
-num_nodes = 1000
+num_nodes = 996
 explore_faction = 2.
 
 def traverse_nodes(node, board, state, identity):
@@ -18,8 +18,8 @@ def traverse_nodes(node, board, state, identity):
     Returns:        A node from which the next stage of the search can proceed.
 
     """
-
-    want_node_val = 0
+    print("Traverse root node: ")
+    print(node)
     best = {}
 
     leaf_node = node
@@ -27,21 +27,27 @@ def traverse_nodes(node, board, state, identity):
     values = []
     bestest = 0
 
-    count = 0
     while node.visits and node.child_nodes:
         for child in node.child_nodes:
-            values[count] = explore(child.wins, child.visits, node.visits, explore_faction)
-            best[values[count]] = child
-            count += 1
-        count = 0
+            """
+            print("Child in traverse: ")
+            print(child)
+            print("Real child?: ")
+            print(node.child_nodes[child])
+            """
+            best[child] = explore(node.child_nodes[child].wins, node.child_nodes[child].visits, node.visits, explore_faction)
+            #values.append(explore(node.child_nodes[child].wins, node.child_nodes[child].visits, node.visits, explore_faction))
+            #best[values[count]] = child
 
-        for value in values:
-            if bestest < value:
-                bestest = value
-                leaf_node = best[values[count]]
-            count += 1
-        count = 0
+        for child in best:
+            if best[child] > bestest:
+                bestest = best[child]
+                leaf_node = node.child_nodes[child]
         node = leaf_node
+
+    print("Traverse return leaf: ")
+    print(leaf_node)
+
     return leaf_node
 
     """
@@ -70,14 +76,16 @@ def expand_leaf(node, board, state):
     Returns:    The added child node.
 
     """
-    node.__repr__()
-    print()
+    """print()
+    print("Expanding on leaf: ")
     print(node)
-    print()
+    print()"""
     actions = board.legal_actions(state)
     action = choice(actions)
 
     new_node = MCTSNode(node, action, actions)
+    #print("New leaf: ")
+    #print(new_node)
     node.child_nodes[action] = new_node
     return new_node
 
@@ -90,9 +98,14 @@ def rollout(board, state):
         state:  The state of the game.
 
     """
-    while not board.is_ended():
+    while not board.is_ended(state):
+        #print(board.legal_actions(state))
         action = choice(board.legal_actions(state))
+        #print(action)
         state = board.next_state(state, action)
+        #print(board.display(state,action))
+        #input("Press enter to continue...")
+    return state
 
 
 def backpropagate(node, won):
@@ -137,15 +150,33 @@ def think(board, state):
 
         new_node = expand_leaf(leaf, board, sampled_game)
 
-        rollout(board, sampled_game)
-
+        print("Game state: ")
+        print(sampled_game)
+        sampled_game = rollout(board, sampled_game)
+        print("Game state: ")
+        print(sampled_game)
+        #rollout(board, sampled_game)
+        """
+        print()
+        print()
+        print()
+        print()
+        print()
+        print()
+        print("GAME OVER")
+        print()
+        print()
+        print()
+        print()
+        print()
+        print()
+        """
         player = board.current_player(sampled_game)
+        won = False
         if player == identity_of_bot:
-            backpropagate(new_node, True)
-        else:
-            backpropagate(new_node, False)
-
+            won = True
+        backpropagate(new_node, won)
 
     # Return an action, typically the most frequently used action (from the root) or the action with the best
     # estimated win rate.
-    return leaf
+    return choice(board.legal_actions(state))
